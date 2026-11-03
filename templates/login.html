@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}登录 · 局域网博客{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <h1>登录</h1>
+  <p class="muted">登录后即可发表文章和评论。</p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <label class="field">
+      <span>用户名</span>
+      <input type="text" name="username" maxlength="20" required autofocus>
+    </label>
+    <label class="field">
+      <span>密码</span>
+      <input type="password" name="password" required>
+    </label>
+    <button class="btn block" type="submit">登录</button>
+  </form>
+  <p class="auth-switch muted">还没有账号？<a href="{{ url_for('register') }}">立即注册</a></p>
+</div>
+{% endblock %}

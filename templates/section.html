@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ section['name'] }} · 局域网博客{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ section['name'] }}</h1>
+    <p class="muted">共 {{ total }} 篇文章</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn ghost small" href="{{ url_for('tags_page') }}">全部标签</a>
+    <a class="btn ghost small" href="{{ url_for('posts_list') }}">全部文章</a>
+  </div>
+</div>
+
+{% if posts %}
+  {% include "_post_list.html" %}
+  {% if pages > 1 %}
+  <nav class="pager">
+    {% if page > 1 %}<a class="btn ghost" href="{{ url_for('section_page', section_id=section['id'], page=page-1) }}">上一页</a>{% endif %}
+    <span class="muted">第 {{ page }} / {{ pages }} 页</span>
+    {% if page < pages %}<a class="btn ghost" href="{{ url_for('section_page', section_id=section['id'], page=page+1) }}">下一页</a>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <p>这个板块还没有文章。</p>
+    {% if g.user %}<a class="btn" href="{{ url_for('new_post') }}">写文章</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

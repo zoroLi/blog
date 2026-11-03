@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}#{{ tag['name'] }} · 标签 · 局域网博客{% endblock %}
+{% block content %}
+<nav class="breadcrumb">
+  <a href="{{ url_for('tags_page') }}">标签</a>
+  <span>/</span>
+  <span class="current">#{{ tag['name'] }}</span>
+</nav>
+
+<div class="page-head">
+  <div>
+    <h1>#{{ tag['name'] }}</h1>
+    <p class="muted">共 {{ total }} 篇文章</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn ghost small" href="{{ url_for('tags_page') }}">全部标签</a>
+    <a class="btn ghost small" href="{{ url_for('posts_list') }}">全部文章</a>
+  </div>
+</div>
+
+{% if posts %}
+  {% include "_post_list.html" %}
+  {% if pages > 1 %}
+  <nav class="pager">
+    {% if page > 1 %}<a class="btn ghost" href="{{ url_for('tag_page', tag_id=tag['id'], page=page-1) }}">上一页</a>{% endif %}
+    <span class="muted">第 {{ page }} / {{ pages }} 页</span>
+    {% if page < pages %}<a class="btn ghost" href="{{ url_for('tag_page', tag_id=tag['id'], page=page+1) }}">下一页</a>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <p>这个标签下还没有文章。</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ profile['username'] }} 的主页 · 局域网博客{% endblock %}
+{% block content %}
+<div class="profile-head">
+  <span class="avatar big">{{ profile['username'][0]|upper }}</span>
+  <div>
+    <h1>{{ profile['username'] }}{% if profile['is_admin'] %} <span class="badge">管理员</span>{% endif %}</h1>
+    <p class="muted">加入于 {{ profile['created_at'][:10] }} · 共 {{ posts|length }} 篇文章</p>
+  </div>
+</div>
+
+{% if posts %}
+  {% include "_post_list.html" %}
+{% else %}
+  <p class="muted">还没有发表文章。</p>
+{% endif %}
+{% endblock %}

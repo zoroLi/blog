@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}局域网博客{% endblock %}
+{% block content %}
+<div class="home-head">
+  <div>
+    <h1>博客板块</h1>
+    <p class="muted">选择板块查看文章，或点击下方标签</p>
+  </div>
+  <a class="btn ghost small" href="{{ url_for('posts_list') }}">全部文章</a>
+</div>
+
+{% if boards %}
+<div class="board-grid">
+  {% for board in boards %}
+  <section class="board-card{% if board['theme'] %} board-{{ board['theme'] }}{% endif %}">
+    <div class="board-top">
+      <span class="board-icon">{{ board['name'][0] }}</span>
+      <div>
+        <h2><a href="{{ url_for('section_page', section_id=board['id']) }}">{{ board['name'] }}</a></h2>
+        <p class="muted">{{ board['post_count'] }} 篇文章</p>
+      </div>
+    </div>
+
+    {% if board['latest'] %}
+    <ul class="board-latest">
+      {% for post in board['latest'] %}
+      <li>
+        <a href="{{ url_for('post_detail', post_id=post['id']) }}">{{ post['title'] }}</a>
+        <time>{{ post['created_at'][:10] }}</time>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted board-empty">这个板块还没有文章。</p>
+    {% endif %}
+
+    <a class="board-enter" href="{{ url_for('section_page', section_id=board['id']) }}">进入板块 →</a>
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <p>还没有板块。</p>
+</div>
+{% endif %}
+
+<section class="tag-cloud-section">
+  <div class="tag-cloud-head">
+    <h2>标签</h2>
+    <a class="muted" href="{{ url_for('tags_page') }}">查看全部标签 →</a>
+  </div>
+  {% if tags %}
+  <div class="tag-cloud">
+    {% for tag in tags %}
+    <a class="chip tag-chip{% if tag['theme'] %} tag-{{ tag['theme'] }}{% endif %}" href="{{ url_for('tag_page', tag_id=tag['id']) }}">#{{ tag['name'] }} <span>{{ tag['post_count'] }}</span></a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">还没有标签，写文章时添加即可。</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}注册 · 局域网博客{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <h1>注册</h1>
+  <p class="muted">任何人都可以注册并发表文章。</p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label class="field">
+      <span>用户名</span>
+      <input type="text" name="username" maxlength="20" required autofocus placeholder="1-20 个字符，不能含空格或斜杠">
+    </label>
+    <label class="field">
+      <span>密码</span>
+      <input type="password" name="password" minlength="6" required placeholder="至少 6 位">
+    </label>
+    <label class="field">
+      <span>确认密码</span>
+      <input type="password" name="confirm" minlength="6" required>
+    </label>
+    <button class="btn block" type="submit">注册</button>
+  </form>
+  <p class="auth-switch muted">已有账号？<a href="{{ url_for('login') }}">去登录</a></p>
+</div>
+{% endblock %}

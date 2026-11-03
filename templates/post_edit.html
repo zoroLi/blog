@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑文章' if post else '写文章' }} · 局域网博客{% endblock %}
+{% block content %}
+<div class="editor">
+  <h1>{% if post and post['status'] == 'draft' %}编辑草稿{% elif post %}编辑文章{% else %}写文章{% endif %}</h1>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <input type="hidden" name="content_format" id="content-format" value="{{ editor_format }}">
+    <div class="field">
+      <input class="title-input" type="text" name="title" maxlength="120" placeholder="标题（草稿可以留空）" value="{{ form_title }}" autofocus>
+    </div>
+
+    <div class="post-meta-fields">
+      <label class="field category-field">
+        <span>板块</span>
+        <select name="section_id" id="section-select">
+          <option value="">未选择</option>
+          {% for option in section_options %}
+          <option value="{{ option['id'] }}"{% if option['selected'] %} selected{% endif %}>{{ option['name'] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="field tags-field">
+        <span>标签</span>
+        <input type="text" name="tags" maxlength="200" value="{{ tags_value }}" placeholder="多个标签用逗号分隔，例如：嵌入式, Linux, 调试" list="tag-suggestions">
+        <datalist id="tag-suggestions">
+          {% for tag in all_tags %}
+          <option value="{{ tag['name'] }}"></option>
+          {% endfor %}
+        </datalist>
+      </label>
+    </div>
+
+    <div class="field permission-field">
+      <span>编辑权限</span>
+      {% if can_change_permission %}
+      <div class="permission-options">
+        <label><input type="radio" name="is_shared" value="1"{% if is_shared %} checked{% endif %}> 共享（其他人可修改）</label>
+        <label><input type="radio" name="is_shared" value="0"{% if not is_shared %} checked{% endif %}> 独享（仅自己可修改）</label>
+      </div>
+      {% else %}
+      <div class="muted permission-note">当前为「{{ '共享' if is_shared else '独享' }}」，只有作者可以修改权限。</div>
+      <input type="hidden" name="is_shared" value="{{ is_shared }}">
+      {% endif %}
+    </div>
+
+    <div class="editor-mode-tabs">
+      <button type="button" class="mode-tab{% if editor_format != 'markdown' %} active{% endif %}" data-mode="html">富文本</button>
+      <button type="button" class="mode-tab{% if editor_format == 'markdown' %} active{% endif %}" data-mode="markdown">Markdown</button>
+      <span class="muted">Markdown 支持标题、列表、表格、代码块、图片等语法</span>
+    </div>
+
+    <div id="rich-mode"{% if editor_format == 'markdown' %} hidden{% endif %}>
+    <div class="rich-toolbar" id="rich-toolbar">
+      <select id="block-select" title="段落格式">
+        <option value="p">正文</option>
+        <option value="h2">标题 2</option>
+        <option value="h3">标题 3</option>
+        <option value="blockquote">引用</option>
+      </select>
+      <select id="font-select" title="字体">
+        <option value="">默认字体</option>
+        <option value="SimHei">黑体</option>
+        <option value="SimSun">宋体</option>
+        <option value="KaiTi">楷体</option>
+        <option value="Microsoft YaHei">微软雅黑</option>
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+      </select>
+      <select id="size-select" title="字号">
+        <option value="">默认字号</option>
+        <option value="2">小</option>
+        <option value="3">正常</option>
+        <option value="4">大</option>
+        <option value="5">特大</option>
+        <option value="6">超大</option>
+      </select>
+      <span class="toolbar-sep"></span>
+      <button type="button" data-command="bold" title="加粗"><b>B</b></button>
+      <button type="button" data-command="italic" title="斜体"><i>I</i></button>
+      <button type="button" data-command="underline" title="下划线"><u>U</u></button>
+      <button type="button" data-command="strikeThrough" title="删除线"><s>S</s></button>
+      <span class="toolbar-sep"></span>
+      <button type="button" data-command="justifyLeft" title="左对齐">左对齐</button>
+      <button type="button" data-command="justifyCenter" title="居中">居中</button>
+      <button type="button" data-command="justifyRight" title="右对齐">右对齐</button>
+      <button type="button" data-command="justifyFull" title="两端对齐">两端</button>
+      <span class="toolbar-sep"></span>
+      <button type="button" data-command="insertUnorderedList" title="无序列表">• 列表</button>
+      <button type="button" data-command="insertOrderedList" title="有序列表">1. 列表</button>
+      <span class="toolbar-sep"></span>
+      <button type="button" id="inline-code" title="行内代码">行内代码</button>
+      <button type="button" id="code-block" title="插入代码块">代码块</button>
+      <select id="code-lang" title="代码语言">
+        <option value="">自动检测</option>
+        <option value="python">Python</option>
+        <option value="javascript">JavaScript</option>
+        <option value="typescript">TypeScript</option>
+        <option value="java">Java</option>
+        <option value="c">C</option>
+        <option value="cpp">C++</option>
+        <option value="csharp">C#</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+        <option value="sql">SQL</option>
+        <option value="bash">Shell</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="json">JSON</option>
+        <option value="yaml">YAML</option>
+        <option value="plaintext">纯文本</option>
+      </select>
+      <span class="toolbar-sep"></span>
+      <div class="color-dropdown" data-command="foreColor">
+        <button type="button" class="color-toggle" title="文字颜色">A</button>
+        <div class="color-menu"></div>
+      </div>
+      <div class="color-dropdown" data-command="hiliteColor">
+        <button type="button" class="color-toggle" title="背景高亮">H</button>
+        <div class="color-menu"></div>
+      </div>
+      <span class="toolbar-sep"></span>
+      <button type="button" id="link-btn" title="插入链接">链接</button>
+      <label class="btn ghost small upload-btn">
+        <input type="file" id="image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+        插入图片
+      </label>
+      <button type="button" id="clear-format" title="清除格式">清除格式</button>
+    </div>
+    <div class="toolbar-status muted" id="upload-status">支持 JPG/PNG/GIF/WEBP，单张不超过 8MB，也可拖拽或粘贴图片</div>
+    <div id="editor" class="rich-editor" contenteditable="true" data-placeholder="在这里写正文，可用上方工具栏设置字体、字号、对齐、加粗等样式">{{ editor_html }}</div>
+    </div>
+
+    <div id="markdown-mode"{% if editor_format != 'markdown' %} hidden{% endif %}>
+      <div class="rich-toolbar markdown-toolbar">
+        <button type="button" data-md="bold" title="插入加粗">加粗</button>
+        <button type="button" data-md="heading" title="插入标题">标题</button>
+        <button type="button" data-md="link" title="插入链接">链接</button>
+        <button type="button" data-md="inline-code" title="插入行内代码">行内代码</button>
+        <button type="button" data-md="code-block" title="插入代码块">代码块</button>
+        <span class="toolbar-sep"></span>
+        <label class="btn ghost small upload-btn">
+          <input type="file" id="markdown-image-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+          插入图片
+        </label>
+      </div>
+      <div class="toolbar-status muted" id="markdown-status">图片会以 Markdown 语法插入；右侧为实时预览</div>
+      <div class="markdown-workspace">
+        <textarea id="markdown-input" class="markdown-input" spellcheck="false" placeholder="在这里编写 Markdown，例如：# 标题、**加粗**、```代码块```">{{ markdown_source }}</textarea>
+        <div id="markdown-preview" class="markdown-preview"></div>
+      </div>
+    </div>
+
+    <textarea name="content" id="content-input" hidden></textarea>
+    {% if not post or post['status'] == 'draft' %}
+    <p class="muted draft-hint">草稿只有你自己能看到，发布后其他人才能访问。</p>
+    {% endif %}
+    <div class="form-actions">
+      {% if post and post['status'] == 'published' %}
+      <button class="btn" type="submit" name="action" value="publish">保存修改</button>
+      {% else %}
+      <button class="btn" type="submit" name="action" value="publish">发布文章</button>
+      <button class="btn ghost" type="submit" name="action" value="draft">保存草稿</button>
+      {% endif %}
+      <a class="btn ghost" href="{{ url_for('post_detail', post_id=post['id']) if post else url_for('index') }}">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='editor.js') }}"></script>
+{% endblock %}

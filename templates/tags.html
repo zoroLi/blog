@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}标签 · 局域网博客{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>标签</h1>
+    <p class="muted">共 {{ tags|length }} 个标签</p>
+  </div>
+  <a class="btn ghost small" href="{{ url_for('posts_list') }}">全部文章</a>
+</div>
+
+{% if tags %}
+<div class="tag-cloud">
+  {% for tag in tags %}
+  <a class="chip tag-chip{% if tag['theme'] %} tag-{{ tag['theme'] }}{% endif %}" href="{{ url_for('tag_page', tag_id=tag['id']) }}">#{{ tag['name'] }} <span>{{ tag['post_count'] }}</span></a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <p>还没有标签，写文章时添加即可。</p>
+</div>
+{% endif %}
+{% endblock %}

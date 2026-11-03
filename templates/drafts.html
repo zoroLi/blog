@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}草稿箱 · 局域网博客{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>草稿箱</h1>
+    <p class="muted">共 {{ posts|length }} 篇草稿，只有你自己可以看到</p>
+  </div>
+  <a class="btn" href="{{ url_for('new_post') }}">写文章</a>
+</div>
+
+{% if posts %}
+<div class="post-list">
+  {% for post in posts %}
+  <article class="post-card">
+    <div class="post-meta">
+      <span class="badge draft-badge">草稿</span>
+      <span class="dot">·</span>
+      <time>更新于 {{ post['updated_at'][:16] }}</time>
+    </div>
+    <h2><a href="{{ url_for('edit_post', post_id=post['id']) }}">{{ post['title'] or '未命名草稿' }}</a></h2>
+    <p class="excerpt">{% if post['content'] %}{{ post['content']|excerpt(post['content_format']) }}{% else %}（还没有正文内容）{% endif %}</p>
+    <div class="draft-actions">
+      <a class="btn ghost small" href="{{ url_for('post_detail', post_id=post['id']) }}">预览</a>
+      <a class="btn small" href="{{ url_for('edit_post', post_id=post['id']) }}">继续编辑</a>
+      <form method="post" action="{{ url_for('delete_post', post_id=post['id']) }}" class="inline" onsubmit="return confirm('确定删除这篇草稿吗？');">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn danger small" type="submit">删除</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <p>还没有草稿。</p>
+  <a class="btn" href="{{ url_for('new_post') }}">写一篇</a>
+</div>
+{% endif %}
+{% endblock %}

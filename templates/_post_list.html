@@ -1,0 +1,28 @@
+<div class="post-list">
+  {% for post in posts %}
+  <article class="post-card">
+    <div class="post-meta">
+      <span class="avatar">{{ post['username'][0]|upper }}</span>
+      <a class="author" href="{{ url_for('user_page', username=post['username']) }}">{{ post['username'] }}</a>
+      {% if post['is_admin'] %}<span class="badge">管理员</span>{% endif %}
+      {% include "_lock_badge.html" %}
+      <span class="dot">·</span>
+      <time>{{ post['created_at'][:16] }}</time>
+      <span class="dot">·</span>
+      <span>{{ post['comment_count'] }} 条评论</span>
+      {% if post['section_id'] and post['section_name'] %}
+      <span class="dot">·</span>
+      <a class="badge category-badge" href="{{ url_for('section_page', section_id=post['section_id']) }}">{{ post['section_name'] }}</a>
+      {% endif %}
+      {% if post['tags'] %}
+      <span class="dot">·</span>
+      {% for tag in post['tags'] %}
+      <a class="chip post-meta-tag" href="{{ url_for('tag_page', tag_id=tag['id']) }}">#{{ tag['name'] }}</a>
+      {% endfor %}
+      {% endif %}
+    </div>
+    <h2><a href="{{ url_for('post_detail', post_id=post['id']) }}">{{ post['title'] }}</a></h2>
+    <p class="excerpt">{{ post['content']|excerpt(post['content_format']) }}</p>
+  </article>
+  {% endfor %}
+</div>

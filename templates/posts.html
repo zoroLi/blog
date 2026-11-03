@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}全部文章 · 局域网博客{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>全部文章</h1>
+    <p class="muted">共 {{ total }} 篇{% if q %}，搜索“{{ q }}”{% endif %}</p>
+  </div>
+  <div class="head-actions">
+    <form class="search" method="get" action="{{ url_for('posts_list') }}">
+      <input type="search" name="q" value="{{ q }}" placeholder="搜索文章…">
+      <button type="submit" class="btn ghost">搜索</button>
+    </form>
+    {% if g.user %}<a class="btn" href="{{ url_for('new_post') }}">写文章</a>{% endif %}
+  </div>
+</div>
+
+{% if posts %}
+  {% include "_post_list.html" %}
+  {% if pages > 1 %}
+  <nav class="pager">
+    {% if page > 1 %}<a class="btn ghost" href="{{ url_for('posts_list', page=page-1, q=q or None) }}">上一页</a>{% endif %}
+    <span class="muted">第 {{ page }} / {{ pages }} 页</span>
+    {% if page < pages %}<a class="btn ghost" href="{{ url_for('posts_list', page=page+1, q=q or None) }}">下一页</a>{% endif %}
+  </nav>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <p>{% if q %}没有找到匹配的文章。{% else %}还没有文章。{% endif %}</p>
+    {% if g.user %}
+      <a class="btn" href="{{ url_for('new_post') }}">写下第一篇</a>
+    {% else %}
+      <a class="btn" href="{{ url_for('login') }}">登录后开始写作</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ post['title'] }} · 局域网博客{% endblock %}
+{% block head %}
+{% if has_code %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/highlight-github-dark.min.css') }}">
+{% endif %}
+{% endblock %}
+{% block content %}
+<article class="post-detail">
+  <h1>{{ post['title'] }}</h1>
+  <div class="post-meta">
+    <span class="avatar">{{ post['username'][0]|upper }}</span>
+    <a class="author" href="{{ url_for('user_page', username=post['username']) }}">{{ post['username'] }}</a>
+    {% if post['is_admin'] %}<span class="badge">管理员</span>{% endif %}
+    {% if post['status'] == 'draft' %}
+    <span class="badge draft-badge">草稿</span>
+    {% else %}
+    {% include "_lock_badge.html" %}
+    {% endif %}
+    <span class="dot">·</span>
+    <time>{{ post['created_at'][:16] }}</time>
+    {% if post['section_id'] and post['section_name'] %}
+      <span class="dot">·</span>
+      <a class="badge category-badge" href="{{ url_for('section_page', section_id=post['section_id']) }}">{{ post['section_name'] }}</a>
+    {% endif %}
+    {% if last_update %}
+      <span class="dot">·</span>
+      <span class="muted">最后由 {{ last_update['username'] }} 修改于 {{ last_update['created_at'][:16] }}</span>
+    {% endif %}
+  </div>
+
+  {% if post['status'] == 'draft' %}
+  <div class="draft-banner">草稿：只有你自己能看到。继续编辑并发布后，其他人才能访问。</div>
+  {% endif %}
+
+  {% if can_edit_post(post) or can_manage_post(post) %}
+  <div class="post-actions">
+    {% if can_edit_post(post) %}
+    <a class="btn ghost small" href="{{ url_for('edit_post', post_id=post['id']) }}">编辑</a>
+    {% endif %}
+    {% if can_manage_post(post) %}
+    <form method="post" action="{{ url_for('delete_post', post_id=post['id']) }}" class="inline" onsubmit="return confirm('确定删除这篇文章吗？评论也会一并删除。');">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn danger small" type="submit">删除</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="post-content{% if post['content_format'] != 'html' %} legacy{% endif %}">{{ content_html }}</div>
+
+  {% if tags %}
+  <div class="post-tags">
+    <span class="muted">标签：</span>
+    {% for tag in tags %}
+    <a class="chip" href="{{ url_for('tag_page', tag_id=tag['id']) }}">#{{ tag['name'] }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="export-bar">
+    <span class="muted">导出文章：</span>
+    <a class="btn ghost small" href="{{ url_for('export_post', post_id=post['id'], fmt='pdf') }}">PDF</a>
+    <a class="btn ghost small" href="{{ url_for('export_post', post_id=post['id'], fmt='doc') }}">Word</a>
+    <a class="btn ghost small" href="{{ url_for('export_post', post_id=post['id'], fmt='md') }}">Markdown</a>
+    <a class="btn ghost small" href="{{ url_for('export_post', post_id=post['id'], fmt='html') }}">HTML</a>
+    <a class="btn ghost small" href="{{ url_for('export_post', post_id=post['id'], fmt='txt') }}">纯文本</a>
+  </div>
+</article>
+
+{% if post['status'] != 'draft' %}
+<section class="history">
+  <h2>修改记录</h2>
+  <ol class="history-list">
+    {% for h in history %}
+    <li class="history-item">
+      <span class="badge history-badge">{{ '创建' if h['action'] == 'create' else '修改' }}</span>
+      <div class="history-body">
+        <div class="history-line">
+          <a class="author" href="{{ url_for('user_page', username=h['username']) }}">{{ h['username'] }}</a>
+          <span>{{ '创建了文章' if h['action'] == 'create' else '修改了文章' }}</span>
+          {% if h['detail'] %}<span class="muted">（{{ h['detail'] }}）</span>{% endif %}
+        </div>
+        <time class="muted">{{ h['created_at'][:16] }}</time>
+      </div>
+    </li>
+    {% else %}
+    <li class="muted">暂无修改记录。</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% if post['status'] != 'draft' %}
+<section class="comments" id="comments">
+  <h2>评论 <span class="muted">({{ comments|length }})</span></h2>
+
+  {% for c in comments %}
+  <div class="comment">
+    <div class="post-meta">
+      <span class="avatar small">{{ c['username'][0]|upper }}</span>
+      <a class="author" href="{{ url_for('user_page', username=c['username']) }}">{{ c['username'] }}</a>
+      {% if c['is_admin'] %}<span class="badge">管理员</span>{% endif %}
+      <span class="dot">·</span>
+      <time>{{ c['created_at'][:16] }}</time>
+      {% if g.user and (g.user['id'] == c['user_id'] or g.user['is_admin']) %}
+      <form method="post" action="{{ url_for('delete_comment', comment_id=c['id']) }}" class="inline push-right" onsubmit="return confirm('删除这条评论？');">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="linklike" type="submit">删除</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="comment-content">{{ c['content'] }}</div>
+  </div>
+  {% else %}
+  <p class="muted">还没有评论，来说两句吧。</p>
+  {% endfor %}
+
+  {% if g.user %}
+  <form class="comment-form" method="post" action="{{ url_for('add_comment', post_id=post['id']) }}">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <textarea name="content" rows="4" maxlength="2000" placeholder="写下你的评论…" required></textarea>
+    <button class="btn" type="submit">发表评论</button>
+  </form>
+  {% else %}
+  <p class="muted"><a href="{{ url_for('login', next=request.path) }}">登录</a>后可以评论。</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if has_code %}
+<script src="{{ url_for('static', filename='vendor/highlight.min.js') }}"></script>
+<script>hljs.highlightAll();</script>
+{% endif %}
+{% endblock %}
